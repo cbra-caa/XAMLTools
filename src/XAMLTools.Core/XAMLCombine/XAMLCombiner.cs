@@ -14,7 +14,7 @@ namespace XAMLTools.XAMLCombine
     {
         private const int BufferSize = 32768; // 32 Kilobytes
 
-        private static readonly Regex resourceUsageRegex = new(@"({StaticResource\s(?<ResourceKey>.*?)})", RegexOptions.IgnorePatternWhitespace);
+        private static readonly Regex resourceUsageRegex = new(@"({(DynamicResource|StaticResource)\s(?<ResourceKey>.*?)})", RegexOptions.IgnorePatternWhitespace);
 
         private const string MergedDictionariesString = "ResourceDictionary.MergedDictionaries";
 
@@ -289,6 +289,11 @@ namespace XAMLTools.XAMLCombine
                     var containsAll = true;
                     for (var j = 0; j < resourcesList[i].UsedKeys.Length; j++)
                     {
+                        if (resourcesList[i].UsedKeys[j] == resourcesList[i].Key)
+                        {
+                            continue;
+                        }
+
                         if (resourceElements.ContainsKey(resourcesList[i].UsedKeys[j])
                             && finalOrderList.Contains(resourceElements[resourcesList[i].UsedKeys[j]]) == false)
                         {

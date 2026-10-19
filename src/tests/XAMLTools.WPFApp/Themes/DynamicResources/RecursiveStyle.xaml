@@ -3,4 +3,8 @@
     <Style x:Key="NodeStyle" TargetType="{x:Type TreeViewItem}">
         <Setter Property="ItemContainerStyle" Value="{DynamicResource NodeStyle}" />
     </Style>
+
+    <Style x:Key="NestedNodeStyle" TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource NodeStyle}">
+        <Setter Property="ItemContainerStyle" Value="{DynamicResource NodeStyle}" />
+    </Style>
 </ResourceDictionary>
