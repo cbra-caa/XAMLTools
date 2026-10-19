@@ -1,0 +1,11 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="OuterStyle" TargetType="{x:Type Button}">
+        <Style.Resources>
+            <SolidColorBrush x:Key="Shared" Color="Blue" />
+        </Style.Resources>
+        <Setter Property="Background" Value="{StaticResource Shared}" />
+    </Style>
+
+    <Style x:Key="Shared" TargetType="{x:Type Button}" BasedOn="{StaticResource OuterStyle}" />
+</ResourceDictionary>

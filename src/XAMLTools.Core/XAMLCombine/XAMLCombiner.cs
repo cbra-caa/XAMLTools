@@ -494,6 +494,11 @@ Source files:
                             resourceKey += "}";
                         }
 
+                        if (IsLocalResourceReference(element, resourceKey))
+                        {
+                            continue;
+                        }
+
                         // Add key to result
                         if (result.Contains(resourceKey) == false)
                         {
@@ -510,6 +515,26 @@ Source files:
             }
 
             return result.ToArray();
+        }
+
+        private static bool IsLocalResourceReference(XElement usage, string resourceKey)
+        {
+            foreach (var owner in usage.Ancestors())
+            {
+                var resources = owner.Elements()
+                    .Where(property => property.Name.LocalName.EndsWith(".Resources", StringComparison.Ordinal))
+                    .SelectMany(property => property.Elements())
+                    .SelectMany(element => element.Name.LocalName == ResourceDictionaryString ? element.Elements() : new[] { element });
+
+                // An entry's own construction can inherit the same key from an outer scope.
+                if (resources.Any(resource => GetKey(resource, WinfxXAMLNamespaceUri) == resourceKey
+                                              && usage.AncestorsAndSelf().Contains(resource) == false))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private string WriteResultFile(string resultFile, XDocument finalDocument)
