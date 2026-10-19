@@ -283,6 +283,7 @@ namespace XAMLTools.XAMLCombine
             // Add other resources in correct order
             while (resourcesList.Count > 0)
             {
+                var resourceCount = resourcesList.Count;
                 for (var i = 0; i < resourcesList.Count; i++)
                 {
                     // Check used keys is in result list
@@ -309,7 +310,11 @@ namespace XAMLTools.XAMLCombine
                     }
                 }
 
-                // TODO: Limit iterations count.
+                if (resourcesList.Count == resourceCount)
+                {
+                    var remainingKeys = string.Join(", ", resourcesList.Select(resource => resource.Key));
+                    throw new InvalidOperationException($"Cannot order XAML resources. Check for circular dependencies between: {remainingKeys}");
+                }
             }
 
             // WinUI / UWP
