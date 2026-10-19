@@ -109,7 +109,7 @@
                     Assert.That(() => xamlCombiner.Combine(new[] { themeFilePath }, this.targetFile),
                                 Throws.Exception
                                       .With.Message
-                                      .Contains("Cannot order XAML resources."),
+                                      .Contains("Cannot order due to a possible circular reference"),
                                 themeFilePath);
                 }
             });
