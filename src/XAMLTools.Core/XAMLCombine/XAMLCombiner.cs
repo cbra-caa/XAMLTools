@@ -14,7 +14,7 @@ namespace XAMLTools.XAMLCombine
     {
         private const int BufferSize = 32768; // 32 Kilobytes
 
-        private static readonly Regex resourceUsageRegex = new(@"({(DynamicResource|StaticResource)\s(?<ResourceKey>.*?)})", RegexOptions.IgnorePatternWhitespace);
+        private static readonly Regex resourceUsageRegex = new(@"({StaticResource\s(?<ResourceKey>.*?)})", RegexOptions.IgnorePatternWhitespace);
 
         private const string MergedDictionariesString = "ResourceDictionary.MergedDictionaries";
 
