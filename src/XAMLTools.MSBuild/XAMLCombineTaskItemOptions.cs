@@ -1,6 +1,8 @@
 namespace XAMLTools.MSBuild;
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Build.Framework;
 using XAMLTools.XAMLCombine;
 
@@ -16,6 +18,8 @@ public class XAMLCombineTaskItemOptions : IXamlCombinerOptions, IEquatable<XAMLC
 
     public bool IncludeSourceFilesInFileHeader { get; init; } = XAMLCombiner.IncludeSourceFilesInFileHeaderDefault;
 
+    public IEnumerable<string> ExternalStyleNamespaces { get; init; } = Array.Empty<string>();
+
     public static XAMLCombineTaskItemOptions From(ITaskItem taskItem)
     {
         var result = new XAMLCombineTaskItemOptions
@@ -25,6 +29,11 @@ public class XAMLCombineTaskItemOptions : IXamlCombinerOptions, IEquatable<XAMLC
             WriteFileHeader = GetBool(taskItem, nameof(WriteFileHeader), XAMLCombiner.WriteFileHeaderDefault),
             FileHeader = GetString(taskItem, nameof(FileHeader), XAMLCombiner.FileHeaderDefault),
             IncludeSourceFilesInFileHeader = GetBool(taskItem, nameof(IncludeSourceFilesInFileHeader), XAMLCombiner.IncludeSourceFilesInFileHeaderDefault),
+            ExternalStyleNamespaces = GetString(taskItem, nameof(ExternalStyleNamespaces), string.Empty)
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(namespaceUri => namespaceUri.Trim())
+                .Where(namespaceUri => namespaceUri.Length > 0)
+                .ToArray(),
         };
 
         return result;
@@ -56,7 +65,8 @@ public class XAMLCombineTaskItemOptions : IXamlCombinerOptions, IEquatable<XAMLC
                && this.ImportMergedResourceDictionaryReferences == other.ImportMergedResourceDictionaryReferences
                && this.WriteFileHeader == other.WriteFileHeader
                && this.FileHeader == other.FileHeader
-               && this.IncludeSourceFilesInFileHeader == other.IncludeSourceFilesInFileHeader;
+               && this.IncludeSourceFilesInFileHeader == other.IncludeSourceFilesInFileHeader
+               && new HashSet<string>(this.ExternalStyleNamespaces).SetEquals(other.ExternalStyleNamespaces);
     }
 
     public override int GetHashCode()
@@ -70,6 +80,10 @@ public class XAMLCombineTaskItemOptions : IXamlCombinerOptions, IEquatable<XAMLC
             hashCode = (hashCode * 397) ^ this.WriteFileHeader.GetHashCode();
             hashCode = (hashCode * 397) ^ this.FileHeader.GetHashCode();
             hashCode = (hashCode * 397) ^ this.IncludeSourceFilesInFileHeader.GetHashCode();
+            foreach (var namespaceUri in this.ExternalStyleNamespaces.Distinct().OrderBy(namespaceUri => namespaceUri, StringComparer.Ordinal))
+            {
+                hashCode = (hashCode * 397) ^ namespaceUri.GetHashCode();
+            }
             return hashCode;
         }
     }

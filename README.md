@@ -29,6 +29,21 @@ Using one large XAML file not only makes it easier to consume, but can also dras
 </XAMLCombineItems>
 ```
 
+Use `ExternalStyleNamespaces` when a style inherits an external type-keyed style
+that is also overridden by a local implicit style:
+
+```xml
+<XAMLCombineItems Include="Themes/Controls/*.xaml">
+  <TargetFile>Themes/Generic.xaml</TargetFile>
+  <ExternalStyleNamespaces>urn:external-controls</ExternalStyleNamespaces>
+</XAMLCombineItems>
+```
+
+Separate multiple namespace URIs with line breaks. Only `Style.BasedOn` type
+references in those namespaces are excluded from dependency ordering; the XAML
+references remain unchanged. The C# API exposes the same option as a collection
+on `XAMLCombiner`.
+
 The MSBuild-Task includes the items used for combining as pages during debug builds and removes them from pages during release builds.
 This is done to reduce the binary size for release builds and still enable intellisense in debug builds for those XAML files.
 
@@ -51,6 +66,7 @@ To get intellisense in debug builds inside the XAML files and to prevent duplica
 
 - `-s "Path_To_Your_SourceFile"` => A file containing a new line separated list of files to combine (lines starting with # are skipped)
 - `-t "Path_To_Your_Target_File.xaml"`
+- `--ExternalStyleNamespaces "urn:external-controls" "clr-namespace:External.Controls;assembly=External.Controls"` => Optional external base-style namespaces
 
 ## XAMLColorSchemeGenerator
 

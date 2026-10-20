@@ -16,6 +16,8 @@ namespace XAMLTools.XAMLCombine
 
         private static readonly Regex resourceUsageRegex = new(@"({(DynamicResource|StaticResource)\s(?<ResourceKey>.*?)})", RegexOptions.IgnorePatternWhitespace);
 
+        private static readonly Regex typeResourceKeyRegex = new(@"^\{(?<XamlPrefix>[^:\s{}]+):Type\s+(?:TypeName\s*=\s*)?(?:(?<TypePrefix>[^:\s{}]+):)?[^:\s{}]+\s*\}$");
+
         private const string MergedDictionariesString = "ResourceDictionary.MergedDictionaries";
 
         // WinUI / UWP
@@ -41,6 +43,11 @@ namespace XAMLTools.XAMLCombine
         public string FileHeader { get; set; } = FileHeaderDefault;
 
         public bool IncludeSourceFilesInFileHeader { get; set; } = IncludeSourceFilesInFileHeaderDefault;
+
+        /// <summary>
+        /// Namespaces whose Style.BasedOn type references are resolved externally instead of ordered locally.
+        /// </summary>
+        public IEnumerable<string> ExternalStyleNamespaces { get; set; } = Array.Empty<string>();
 
         public ILogger? Logger { get; set; } = new TraceLogger();
 
@@ -359,7 +366,7 @@ namespace XAMLTools.XAMLCombine
                 if (resourceElements.TryGetValue(key, out var existingElement) == false)
                 {
                     // Create ResourceElement for key and XML element
-                    var res = new ResourceElement(key, importedElement, GetUsedKeys(importedElement))
+                    var res = new ResourceElement(key, importedElement, this.GetUsedKeys(element))
                     {
                         ElementDebugInfo = GetDebugInfo(element)
                     };
@@ -467,7 +474,7 @@ Source files:
         /// </summary>
         /// <param name="element">Xml element which contains resource.</param>
         /// <returns>Array of keys used by resource.</returns>
-        private static string[] GetUsedKeys(XElement element)
+        private string[] GetUsedKeys(XElement element)
         {
             // Result list
             var result = new List<string>();
@@ -494,6 +501,11 @@ Source files:
                             resourceKey += "}";
                         }
 
+                        if (this.IsExternalStyleReference(element, attr, resourceKey))
+                        {
+                            continue;
+                        }
+
                         // Add key to result
                         if (result.Contains(resourceKey) == false)
                         {
@@ -506,10 +518,30 @@ Source files:
             // Check child elements
             foreach (var childElement in element.Elements())
             {
-                result.AddRange(GetUsedKeys(childElement));
+                result.AddRange(this.GetUsedKeys(childElement));
             }
 
             return result.ToArray();
+        }
+
+        private bool IsExternalStyleReference(XElement element, XAttribute attribute, string resourceKey)
+        {
+            if (element.Name != XName.Get("Style", WinfxXAMLPresentationNamespaceUri)
+                || attribute.Name != "BasedOn")
+            {
+                return false;
+            }
+
+            var match = typeResourceKeyRegex.Match(resourceKey);
+            if (match.Success == false
+                || element.GetNamespaceOfPrefix(match.Groups["XamlPrefix"].Value)?.NamespaceName != WinfxXAMLNamespaceUri)
+            {
+                return false;
+            }
+
+            var prefix = match.Groups["TypePrefix"].Value;
+            var typeNamespace = prefix.Length == 0 ? element.GetDefaultNamespace() : element.GetNamespaceOfPrefix(prefix);
+            return typeNamespace is not null && this.ExternalStyleNamespaces.Contains(typeNamespace.NamespaceName);
         }
 
         private string WriteResultFile(string resultFile, XDocument finalDocument)
