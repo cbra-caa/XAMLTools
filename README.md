@@ -40,11 +40,11 @@ that is also overridden by a local implicit style:
 ```xml
 <XAMLCombineItems Include="Themes/Controls/*.xaml">
   <TargetFile>Themes/Generic.xaml</TargetFile>
-  <ExcludedNameSpaces>urn:external-controls</ExcludedNameSpaces>
+  <ExcludedNameSpaces>urn:external-controls#clr-namespace:External.Controls;assembly=External.Controls</ExcludedNameSpaces>
 </XAMLCombineItems>
 ```
 
-Separate multiple namespace URIs with line breaks. Only `Style.BasedOn` type
+Separate multiple namespace URIs with `#`. Only `Style.BasedOn` type
 references in those namespaces are excluded from dependency ordering; the XAML
 references remain unchanged. The C# API exposes the same option as a collection
 on `XAMLCombiner`.
@@ -69,7 +69,7 @@ To get intellisense in debug builds inside the XAML files and to prevent duplica
 
 - `-s "Path_To_Your_SourceFile"` => A file containing a new line separated list of files to combine (lines starting with # are skipped)
 - `-t "Path_To_Your_Target_File.xaml"`
-- `--ExcludedNameSpaces "urn:external-controls" "clr-namespace:External.Controls;assembly=External.Controls"` => Optional external base-style namespaces
+- `--ExcludedNameSpaces "urn:external-controls#clr-namespace:External.Controls;assembly=External.Controls"` => Optional external base-style namespaces
 
 ## XAMLColorSchemeGenerator
 

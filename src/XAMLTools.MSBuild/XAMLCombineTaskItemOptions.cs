@@ -94,7 +94,7 @@ public class XAMLCombineTaskItemOptions : IXamlCombinerOptions, IEquatable<XAMLC
     private static IEnumerable<string> GetStrings(ITaskItem taskItem, string metadataName)
     {
         return GetString(taskItem, metadataName, string.Empty)
-            .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+            .Split(new[] { '#' }, StringSplitOptions.RemoveEmptyEntries)
             .Select(value => value.Trim())
             .Where(value => value.Length > 0)
             .ToArray();
