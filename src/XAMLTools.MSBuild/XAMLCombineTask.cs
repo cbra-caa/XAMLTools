@@ -47,7 +47,7 @@
                     WriteFileHeader = options.WriteFileHeader,
                     FileHeader = options.FileHeader,
                     IncludeSourceFilesInFileHeader = options.IncludeSourceFilesInFileHeader,
-                    ExternalStyleNamespaces = options.ExternalStyleNamespaces,
+                    ExcludedNameSpaces = options.ExcludedNameSpaces,
                     Logger = new MSBuildLogger(this.BuildEngine, nameof(XAMLCombineTask))
                 };
 

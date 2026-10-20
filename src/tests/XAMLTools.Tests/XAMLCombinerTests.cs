@@ -102,7 +102,7 @@
 
             var xamlCombiner = new XAMLCombiner
             {
-                ExternalStyleNamespaces = new[] { "clr-namespace:System.Windows;assembly=PresentationFramework" }
+                ExcludedNameSpaces = new[] { "clr-namespace:System.Windows;assembly=PresentationFramework" }
             };
 
             Assert.That(() => xamlCombiner.Combine(themeFilePaths, this.targetFile),

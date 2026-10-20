@@ -31,8 +31,8 @@ public class XAMLCombineOptions : BaseOptions, IXamlCombinerOptions
     [Option("IncludeSourceFilesInFileHeader", Required = false, HelpText = "Include source files in file header")]
     public bool IncludeSourceFilesInFileHeader { get; set; } = XAMLCombiner.IncludeSourceFilesInFileHeaderDefault;
 
-    [Option("ExternalStyleNamespaces", Required = false, HelpText = "Namespaces whose Style.BasedOn type references are resolved externally")]
-    public IEnumerable<string> ExternalStyleNamespaces { get; set; } = Array.Empty<string>();
+    [Option("ExcludedNameSpaces", Required = false, HelpText = "Namespaces whose Style.BasedOn type references are resolved externally")]
+    public IEnumerable<string> ExcludedNameSpaces { get; set; } = Array.Empty<string>();
 
     public Task<int> Execute()
     {
@@ -42,7 +42,7 @@ public class XAMLCombineOptions : BaseOptions, IXamlCombinerOptions
             WriteFileHeader = this.WriteFileHeader,
             FileHeader = this.FileHeader,
             IncludeSourceFilesInFileHeader = this.IncludeSourceFilesInFileHeader,
-            ExternalStyleNamespaces = this.ExternalStyleNamespaces,
+            ExcludedNameSpaces = this.ExcludedNameSpaces,
             Logger = new ConsoleLogger
             {
                 Verbose = this.Verbose

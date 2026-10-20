@@ -16,7 +16,7 @@ namespace XAMLTools.XAMLCombine
 
         private static readonly Regex resourceUsageRegex = new(@"({(DynamicResource|StaticResource)\s(?<ResourceKey>.*?)})", RegexOptions.IgnorePatternWhitespace);
 
-        private static readonly Regex typeResourceKeyRegex = new(@"^\{(?<XamlPrefix>[^:\s{}]+):Type\s+(?:TypeName\s*=\s*)?(?:(?<TypePrefix>[^:\s{}]+):)?[^:\s{}]+\s*\}$");
+        private static readonly Regex typeResourceKeyRegex = new(@"^\{(?<Extension>\S+)\s+(?:TypeName\s*=\s*)?(?<Type>\S+)\s*\}$");
 
         private const string MergedDictionariesString = "ResourceDictionary.MergedDictionaries";
 
@@ -44,10 +44,7 @@ namespace XAMLTools.XAMLCombine
 
         public bool IncludeSourceFilesInFileHeader { get; set; } = IncludeSourceFilesInFileHeaderDefault;
 
-        /// <summary>
-        /// Namespaces whose Style.BasedOn type references are resolved externally instead of ordered locally.
-        /// </summary>
-        public IEnumerable<string> ExternalStyleNamespaces { get; set; } = Array.Empty<string>();
+        public IEnumerable<string> ExcludedNameSpaces { get; set; } = Array.Empty<string>();
 
         public ILogger? Logger { get; set; } = new TraceLogger();
 
@@ -501,7 +498,7 @@ Source files:
                             resourceKey += "}";
                         }
 
-                        if (this.IsExternalStyleReference(element, attr, resourceKey))
+                        if (this.IsExcludedStyleReference(element, attr, resourceKey))
                         {
                             continue;
                         }
@@ -524,7 +521,7 @@ Source files:
             return result.ToArray();
         }
 
-        private bool IsExternalStyleReference(XElement element, XAttribute attribute, string resourceKey)
+        private bool IsExcludedStyleReference(XElement element, XAttribute attribute, string resourceKey)
         {
             if (element.Name != XName.Get("Style", WinfxXAMLPresentationNamespaceUri)
                 || attribute.Name != "BasedOn")
@@ -533,15 +530,18 @@ Source files:
             }
 
             var match = typeResourceKeyRegex.Match(resourceKey);
+            var extension = match.Groups["Extension"].Value.Split(':');
             if (match.Success == false
-                || element.GetNamespaceOfPrefix(match.Groups["XamlPrefix"].Value)?.NamespaceName != WinfxXAMLNamespaceUri)
+                || extension.Length != 2
+                || extension[1] != "Type"
+                || element.GetNamespaceOfPrefix(extension[0])?.NamespaceName != WinfxXAMLNamespaceUri)
             {
                 return false;
             }
 
-            var prefix = match.Groups["TypePrefix"].Value;
-            var typeNamespace = prefix.Length == 0 ? element.GetDefaultNamespace() : element.GetNamespaceOfPrefix(prefix);
-            return typeNamespace is not null && this.ExternalStyleNamespaces.Contains(typeNamespace.NamespaceName);
+            var type = match.Groups["Type"].Value.Split(':');
+            var typeNamespace = type.Length == 1 ? element.GetDefaultNamespace() : element.GetNamespaceOfPrefix(type[0]);
+            return typeNamespace is not null && this.ExcludedNameSpaces.Contains(typeNamespace.NamespaceName);
         }
 
         private string WriteResultFile(string resultFile, XDocument finalDocument)

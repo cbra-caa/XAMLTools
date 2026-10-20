@@ -12,5 +12,5 @@ public interface IXamlCombinerOptions
 
     bool IncludeSourceFilesInFileHeader { get; }
 
-    IEnumerable<string> ExternalStyleNamespaces { get; }
+    IEnumerable<string> ExcludedNameSpaces { get; }
 }
