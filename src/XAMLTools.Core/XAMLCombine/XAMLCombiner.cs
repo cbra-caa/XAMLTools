@@ -16,6 +16,8 @@ namespace XAMLTools.XAMLCombine
 
         private static readonly Regex resourceUsageRegex = new(@"({(DynamicResource|StaticResource)\s(?<ResourceKey>.*?)})", RegexOptions.IgnorePatternWhitespace);
 
+        private static readonly Regex typeResourceKeyRegex = new(@"^\{(?<Extension>\S+)\s+(?:TypeName\s*=\s*)?(?<Type>\S+)\s*\}$");
+
         private const string MergedDictionariesString = "ResourceDictionary.MergedDictionaries";
 
         // WinUI / UWP
@@ -41,6 +43,8 @@ namespace XAMLTools.XAMLCombine
         public string FileHeader { get; set; } = FileHeaderDefault;
 
         public bool IncludeSourceFilesInFileHeader { get; set; } = IncludeSourceFilesInFileHeaderDefault;
+
+        public IEnumerable<string> ExcludedNameSpaces { get; set; } = Array.Empty<string>();
 
         public ILogger? Logger { get; set; } = new TraceLogger();
 
@@ -375,7 +379,7 @@ namespace XAMLTools.XAMLCombine
                 if (resourceElements.TryGetValue(key, out var existingElement) == false)
                 {
                     // Create ResourceElement for key and XML element
-                    var res = new ResourceElement(key, importedElement, GetUsedKeys(importedElement))
+                    var res = new ResourceElement(key, importedElement, this.GetUsedKeys(element))
                     {
                         ElementDebugInfo = GetDebugInfo(element)
                     };
@@ -483,7 +487,7 @@ Source files:
         /// </summary>
         /// <param name="element">Xml element which contains resource.</param>
         /// <returns>Array of keys used by resource.</returns>
-        private static string[] GetUsedKeys(XElement element)
+        private string[] GetUsedKeys(XElement element)
         {
             // Result list
             var result = new List<string>();
@@ -510,6 +514,11 @@ Source files:
                             resourceKey += "}";
                         }
 
+                        if (this.IsExcludedStyleReference(element, attr, resourceKey))
+                        {
+                            continue;
+                        }
+
                         // Add key to result
                         if (result.Contains(resourceKey) == false)
                         {
@@ -522,10 +531,33 @@ Source files:
             // Check child elements
             foreach (var childElement in element.Elements())
             {
-                result.AddRange(GetUsedKeys(childElement));
+                result.AddRange(this.GetUsedKeys(childElement));
             }
 
             return result.ToArray();
+        }
+
+        private bool IsExcludedStyleReference(XElement element, XAttribute attribute, string resourceKey)
+        {
+            if (element.Name != XName.Get("Style", WinfxXAMLPresentationNamespaceUri)
+                || attribute.Name != "BasedOn")
+            {
+                return false;
+            }
+
+            var match = typeResourceKeyRegex.Match(resourceKey);
+            var extension = match.Groups["Extension"].Value.Split(':');
+            if (match.Success == false
+                || extension.Length != 2
+                || extension[1] != "Type"
+                || element.GetNamespaceOfPrefix(extension[0])?.NamespaceName != WinfxXAMLNamespaceUri)
+            {
+                return false;
+            }
+
+            var type = match.Groups["Type"].Value.Split(':');
+            var typeNamespace = type.Length == 1 ? element.GetDefaultNamespace() : element.GetNamespaceOfPrefix(type[0]);
+            return typeNamespace is not null && this.ExcludedNameSpaces.Contains(typeNamespace.NamespaceName);
         }
 
         private string WriteResultFile(string resultFile, XDocument finalDocument)
